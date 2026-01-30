@@ -217,6 +217,57 @@
         .stat-value.orange { color: #F59E0B; }
         .stat-value.blue { color: #3B82F6; }
 
+        /* Month Selector */
+        .month-selector {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .month-selector label {
+            font-size: 14px; color: #94A3B8;
+        }
+        .month-selector input[type="month"] {
+            padding: 10px 16px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(30, 41, 59, 0.95);
+            color: #E2E8F0; font-size: 14px; font-family: inherit;
+            outline: none;
+        }
+        .month-selector input[type="month"]:focus {
+            border-color: #8B5CF6;
+        }
+
+        /* Monthly Summary */
+        .monthly-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px; margin-bottom: 24px;
+        }
+        .monthly-stat {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px; padding: 16px;
+            text-align: center;
+        }
+        .monthly-stat-label {
+            font-size: 11px; color: #64748B;
+            text-transform: uppercase; margin-bottom: 6px;
+        }
+        .monthly-stat-value {
+            font-size: 22px; font-weight: 700;
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex; align-items: center; gap: 10px;
+            margin: 24px 0 16px; padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .section-header h3 {
+            font-size: 16px; font-weight: 600;
+        }
+        .section-header .total {
+            margin-left: auto; font-size: 14px; font-weight: 600;
+        }
+
         /* Lists */
         .list { display: flex; flex-direction: column; gap: 10px; }
         .list-item {
@@ -315,6 +366,7 @@
             .family-balance { font-size: 32px; }
             .list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
             .list-item-right { width: 100%; justify-content: space-between; }
+            .monthly-stat-value { font-size: 18px; }
         }
     </style>
 </head>
@@ -383,11 +435,11 @@
             <div id="tab-resumen" class="tab-content active">
                 <div class="stats-grid">
                     <div class="stat-card green">
-                        <div class="stat-label">Mis Ingresos</div>
+                        <div class="stat-label">Total Ingresos</div>
                         <div class="stat-value green" id="stat-ingresos">S/ 0.00</div>
                     </div>
                     <div class="stat-card red">
-                        <div class="stat-label">Mis Gastos</div>
+                        <div class="stat-label">Total Gastos</div>
                         <div class="stat-value red" id="stat-gastos">S/ 0.00</div>
                     </div>
                     <div class="stat-card orange">
@@ -399,15 +451,52 @@
                         <div class="stat-value blue" id="stat-medeben">S/ 0.00</div>
                     </div>
                     <div class="stat-card purple">
-                        <div class="stat-label">Mi Balance</div>
+                        <div class="stat-label">Balance Total</div>
                         <div class="stat-value purple" id="stat-balance">S/ 0.00</div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">📈 Resumen de Actividad</div>
-                    <div id="activity-summary">
-                        <p style="color: #64748B;">Aquí verás un resumen de tu actividad financiera.</p>
+                    <div class="card-title">📅 Resumen Mensual</div>
+                    
+                    <div class="month-selector">
+                        <label>Seleccionar mes:</label>
+                        <input type="month" id="selected-month">
+                    </div>
+
+                    <div class="monthly-stats">
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Ingresos del Mes</div>
+                            <div class="monthly-stat-value green" id="month-ingresos">S/ 0.00</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Gastos del Mes</div>
+                            <div class="monthly-stat-value red" id="month-gastos">S/ 0.00</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Balance del Mes</div>
+                            <div class="monthly-stat-value purple" id="month-balance">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Ingresos del mes -->
+                    <div class="section-header">
+                        <span>💵</span>
+                        <h3>Ingresos de <span id="month-name-ingresos">este mes</span></h3>
+                        <span class="total green" id="month-ingresos-total">S/ 0.00</span>
+                    </div>
+                    <div id="month-ingresos-list" class="list">
+                        <div class="empty-state">No hay ingresos en este mes</div>
+                    </div>
+
+                    <!-- Gastos del mes -->
+                    <div class="section-header">
+                        <span>💸</span>
+                        <h3>Gastos de <span id="month-name-gastos">este mes</span></h3>
+                        <span class="total red" id="month-gastos-total">S/ 0.00</span>
+                    </div>
+                    <div id="month-gastos-list" class="list">
+                        <div class="empty-state">No hay gastos en este mes</div>
                     </div>
                 </div>
             </div>
@@ -428,7 +517,7 @@
                         <button class="btn btn-success" onclick="addIngreso()" style="width:100%">💵 Agregar Ingreso</button>
                     </div>
                     <div class="card">
-                        <div class="card-title">💰 Mis Ingresos</div>
+                        <div class="card-title">💰 Todos Mis Ingresos</div>
                         <div id="list-ingresos" class="list">
                             <div class="empty-state">No hay ingresos registrados</div>
                         </div>
@@ -467,7 +556,7 @@
                         <button class="btn btn-primary" onclick="addGasto()" style="width:100%">💸 Agregar Gasto</button>
                     </div>
                     <div class="card">
-                        <div class="card-title">📉 Mis Gastos</div>
+                        <div class="card-title">📉 Todos Mis Gastos</div>
                         <div id="list-gastos" class="list">
                             <div class="empty-state">No hay gastos registrados</div>
                         </div>
@@ -600,12 +689,15 @@
             otros: { icon: '📦', color: '#95A5A6' }
         };
 
+        const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
         let currentUser = null;
         let currentRole = 'usuario';
         let userIngresos = [];
         let userGastos = [];
         let userDeudas = [];
         let familySummary = null;
+        let selectedMonth = '';
 
         // ==================== HELPERS ====================
         function showLoading() { document.getElementById('loading').classList.add('show'); }
@@ -626,6 +718,20 @@
             if (!dateStr) return '';
             const d = new Date(dateStr);
             return d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function getMonthName(monthStr) {
+            if (!monthStr) return 'este mes';
+            const [year, month] = monthStr.split('-');
+            return `${MONTHS[parseInt(month) - 1]} ${year}`;
+        }
+
+        function getMonthFromDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            return `${year}-${month}`;
         }
 
         async function apiCall(params) {
@@ -669,6 +775,11 @@
                 if (currentRole === 'admin') {
                     document.getElementById('admin-tab').style.display = 'flex';
                 }
+
+                // Set current month
+                const now = new Date();
+                selectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                document.getElementById('selected-month').value = selectedMonth;
                 
                 await loadAllData();
                 showNotification(`¡Bienvenido, ${currentUser}!`);
@@ -691,6 +802,7 @@
             showLoading();
             await Promise.all([loadIngresos(), loadGastos(), loadDeudas(), loadFamilySummary()]);
             updateStats();
+            updateMonthlyView();
             if (currentRole === 'admin') await loadAdminData();
             hideLoading();
         }
@@ -745,6 +857,74 @@
             document.getElementById('stat-medeben').textContent = formatCurrency(totalMeDeben);
             document.getElementById('stat-balance').textContent = formatCurrency(balance);
             document.getElementById('stat-balance').className = `stat-value ${balance >= 0 ? 'purple' : 'red'}`;
+        }
+
+        // ==================== MONTHLY VIEW ====================
+        function updateMonthlyView() {
+            const monthName = getMonthName(selectedMonth);
+            document.getElementById('month-name-ingresos').textContent = monthName;
+            document.getElementById('month-name-gastos').textContent = monthName;
+
+            // Filter by month
+            const monthIngresos = userIngresos.filter(i => getMonthFromDate(i.fecha) === selectedMonth);
+            const monthGastos = userGastos.filter(g => getMonthFromDate(g.fecha) === selectedMonth);
+
+            const totalMonthIngresos = monthIngresos.reduce((s, i) => s + (i.monto || 0), 0);
+            const totalMonthGastos = monthGastos.reduce((s, g) => s + (g.monto || 0), 0);
+            const monthBalance = totalMonthIngresos - totalMonthGastos;
+
+            // Update monthly stats
+            document.getElementById('month-ingresos').textContent = formatCurrency(totalMonthIngresos);
+            document.getElementById('month-gastos').textContent = formatCurrency(totalMonthGastos);
+            document.getElementById('month-balance').textContent = formatCurrency(monthBalance);
+            document.getElementById('month-balance').className = `monthly-stat-value ${monthBalance >= 0 ? 'green' : 'red'}`;
+
+            document.getElementById('month-ingresos-total').textContent = formatCurrency(totalMonthIngresos);
+            document.getElementById('month-gastos-total').textContent = formatCurrency(totalMonthGastos);
+
+            // Render lists
+            const ingresosContainer = document.getElementById('month-ingresos-list');
+            if (monthIngresos.length === 0) {
+                ingresosContainer.innerHTML = '<div class="empty-state">No hay ingresos en este mes</div>';
+            } else {
+                ingresosContainer.innerHTML = monthIngresos.map(i => `
+                    <div class="list-item">
+                        <div class="list-item-left">
+                            <div class="list-icon" style="background: rgba(16,185,129,0.2)">💵</div>
+                            <div class="list-info">
+                                <h4>${i.descripcion}</h4>
+                                <p>${formatDate(i.fecha)}</p>
+                            </div>
+                        </div>
+                        <div class="list-item-right">
+                            <span class="amount green">+${formatCurrency(i.monto)}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            const gastosContainer = document.getElementById('month-gastos-list');
+            if (monthGastos.length === 0) {
+                gastosContainer.innerHTML = '<div class="empty-state">No hay gastos en este mes</div>';
+            } else {
+                gastosContainer.innerHTML = monthGastos.map(g => {
+                    const cat = CATEGORIES[g.categoria] || CATEGORIES.otros;
+                    return `
+                        <div class="list-item">
+                            <div class="list-item-left">
+                                <div class="list-icon" style="background: ${cat.color}22">${cat.icon}</div>
+                                <div class="list-info">
+                                    <h4>${g.descripcion}</h4>
+                                    <p>${formatDate(g.fecha)}</p>
+                                </div>
+                            </div>
+                            <div class="list-item-right">
+                                <span class="amount red">-${formatCurrency(g.monto)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // ==================== RENDERS ====================
@@ -1042,19 +1222,16 @@
         function exportToExcel() {
             const wb = XLSX.utils.book_new();
 
-            // Ingresos
             const ingresosData = [['Fecha', 'Descripción', 'Monto']];
             userIngresos.forEach(i => ingresosData.push([formatDate(i.fecha), i.descripcion, i.monto]));
             const wsIngresos = XLSX.utils.aoa_to_sheet(ingresosData);
             XLSX.utils.book_append_sheet(wb, wsIngresos, 'Ingresos');
 
-            // Gastos
             const gastosData = [['Fecha', 'Descripción', 'Categoría', 'Monto']];
             userGastos.forEach(g => gastosData.push([formatDate(g.fecha), g.descripcion, g.categoria, g.monto]));
             const wsGastos = XLSX.utils.aoa_to_sheet(gastosData);
             XLSX.utils.book_append_sheet(wb, wsGastos, 'Gastos');
 
-            // Deudas
             const deudasData = [['Fecha', 'Tipo', 'Persona', 'Descripción', 'Monto']];
             userDeudas.forEach(d => deudasData.push([formatDate(d.fecha), d.tipo === 'debo' ? 'Debo' : 'Me deben', d.persona, d.descripcion, d.monto]));
             const wsDeudas = XLSX.utils.aoa_to_sheet(deudasData);
@@ -1130,6 +1307,12 @@
             await loadUsers();
             document.getElementById('login-btn').addEventListener('click', login);
             document.getElementById('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+            
+            // Month selector change event
+            document.getElementById('selected-month').addEventListener('change', (e) => {
+                selectedMonth = e.target.value;
+                updateMonthlyView();
+            });
         });
     </script>
 </body>
