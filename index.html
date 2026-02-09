@@ -302,6 +302,91 @@
             text-align: center; padding: 40px; color: #64748B;
         }
 
+        /* Category Section - NEW */
+        .category-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px; margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .category-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.03);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .category-header:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .category-header-left {
+            display: flex; align-items: center; gap: 12px;
+        }
+        .category-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .category-name {
+            font-size: 16px; font-weight: 600;
+        }
+        .category-count {
+            font-size: 12px; color: #64748B;
+        }
+        .category-total {
+            font-size: 18px; font-weight: 700; color: #EF4444;
+        }
+        .category-items {
+            padding: 0 20px 16px;
+            display: none;
+        }
+        .category-items.show {
+            display: block;
+        }
+        .category-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        .category-item-info h5 {
+            font-size: 14px; font-weight: 500; margin-bottom: 2px;
+        }
+        .category-item-info p {
+            font-size: 12px; color: #64748B;
+        }
+        .category-item-amount {
+            font-weight: 600; color: #EF4444;
+        }
+
+        /* Historial Total */
+        .historial-total {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px; padding: 24px;
+            text-align: center; margin-top: 24px;
+        }
+        .historial-total-label {
+            font-size: 14px; color: #94A3B8; margin-bottom: 8px;
+        }
+        .historial-total-value {
+            font-size: 36px; font-weight: 800; color: #EF4444;
+        }
+
+        /* Progress Bar */
+        .category-progress {
+            width: 100%; height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px; margin-top: 8px;
+            overflow: hidden;
+        }
+        .category-progress-bar {
+            height: 100%; border-radius: 3px;
+            transition: width 0.3s;
+        }
+
         /* Family Summary */
         .family-header {
             text-align: center; padding: 30px;
@@ -367,6 +452,7 @@
             .list-item { flex-direction: column; align-items: flex-start; gap: 10px; }
             .list-item-right { width: 100%; justify-content: space-between; }
             .monthly-stat-value { font-size: 18px; }
+            .historial-total-value { font-size: 28px; }
         }
     </style>
 </head>
@@ -423,6 +509,7 @@
 
         <nav class="app-nav">
             <button class="nav-btn active" data-tab="resumen">📊 Mi Resumen</button>
+            <button class="nav-btn" data-tab="historial">📆 Historial</button>
             <button class="nav-btn" data-tab="ingresos">💵 Ingresos</button>
             <button class="nav-btn" data-tab="gastos">💸 Gastos</button>
             <button class="nav-btn" data-tab="deudas">📋 Deudas</button>
@@ -497,6 +584,29 @@
                     </div>
                     <div id="month-gastos-list" class="list">
                         <div class="empty-state">No hay gastos en este mes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: HISTORIAL - NUEVA -->
+            <div id="tab-historial" class="tab-content">
+                <div class="card">
+                    <div class="card-title">📆 Historial por Categoría</div>
+                    
+                    <div class="month-selector">
+                        <label>Seleccionar mes:</label>
+                        <input type="month" id="historial-month">
+                    </div>
+
+                    <div id="historial-categories">
+                        <div class="empty-state">Selecciona un mes para ver el historial</div>
+                    </div>
+
+                    <div id="historial-total-container" style="display: none;">
+                        <div class="historial-total">
+                            <div class="historial-total-label">Total Gastos del Mes</div>
+                            <div class="historial-total-value" id="historial-total">S/ 0.00</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -634,16 +744,41 @@
             <!-- TAB: ADMIN -->
             <div id="tab-admin" class="tab-content">
                 <div class="card">
-                    <div class="card-title">⚙️ Panel de Administrador</div>
-                    <p style="color: #64748B; margin-bottom: 20px;">Solo los administradores pueden ver todos los datos de la familia.</p>
+                    <div class="card-title">⚙️ Panel de Administrador - Gastos Familiares</div>
+                    <p style="color: #64748B; margin-bottom: 20px;">Vista completa de todos los gastos de la familia por mes y categoría.</p>
                     
-                    <h3 style="margin: 20px 0 10px;">📊 Todos los Gastos</h3>
-                    <div id="admin-gastos" class="list"></div>
-                    
-                    <h3 style="margin: 20px 0 10px;">💵 Todos los Ingresos</h3>
-                    <div id="admin-ingresos" class="list"></div>
-                    
-                    <h3 style="margin: 20px 0 10px;">📋 Todas las Deudas</h3>
+                    <div class="month-selector">
+                        <label>Seleccionar mes:</label>
+                        <input type="month" id="admin-month">
+                    </div>
+
+                    <div class="monthly-stats" style="margin-bottom: 24px;">
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Total Ingresos Familia</div>
+                            <div class="monthly-stat-value green" id="admin-total-ingresos">S/ 0.00</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Total Gastos Familia</div>
+                            <div class="monthly-stat-value red" id="admin-total-gastos">S/ 0.00</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-label">Balance Familiar</div>
+                            <div class="monthly-stat-value purple" id="admin-balance">S/ 0.00</div>
+                        </div>
+                    </div>
+
+                    <div id="admin-categories">
+                        <div class="empty-state">Selecciona un mes para ver los gastos</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">💵 Ingresos del Mes por Usuario</div>
+                    <div id="admin-ingresos-mes" class="list"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📋 Todas las Deudas Familiares</div>
                     <div id="admin-deudas" class="list"></div>
                 </div>
             </div>
@@ -677,16 +812,16 @@
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsBo-GGgDNbfYzvGBpNHUmSQW8dEXyqProVkpr_8BAgkbKcE4Kl4acys25mMeUONGspQ/exec';
 
         const CATEGORIES = {
-            alimentacion: { icon: '🍽️', color: '#FF6B6B' },
-            transporte: { icon: '🚗', color: '#4ECDC4' },
-            servicios: { icon: '💡', color: '#FF9800' },
-            vivienda: { icon: '🏠', color: '#2ECC71' },
-            salud: { icon: '💊', color: '#3498DB' },
-            educacion: { icon: '📚', color: '#F39C12' },
-            entretenimiento: { icon: '🎬', color: '#9B59B6' },
-            ropa: { icon: '👕', color: '#E91E63' },
-            tecnologia: { icon: '💻', color: '#00BCD4' },
-            otros: { icon: '📦', color: '#95A5A6' }
+            alimentacion: { icon: '🍽️', name: 'Alimentación', color: '#FF6B6B' },
+            transporte: { icon: '🚗', name: 'Transporte', color: '#4ECDC4' },
+            servicios: { icon: '💡', name: 'Servicios', color: '#FF9800' },
+            vivienda: { icon: '🏠', name: 'Vivienda', color: '#2ECC71' },
+            salud: { icon: '💊', name: 'Salud', color: '#3498DB' },
+            educacion: { icon: '📚', name: 'Educación', color: '#F39C12' },
+            entretenimiento: { icon: '🎬', name: 'Entretenimiento', color: '#9B59B6' },
+            ropa: { icon: '👕', name: 'Ropa', color: '#E91E63' },
+            tecnologia: { icon: '💻', name: 'Tecnología', color: '#00BCD4' },
+            otros: { icon: '📦', name: 'Otros', color: '#95A5A6' }
         };
 
         const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -698,6 +833,10 @@
         let userDeudas = [];
         let familySummary = null;
         let selectedMonth = '';
+        let historialMonth = '';
+        let allAdminGastos = [];
+        let allAdminIngresos = [];
+        let allAdminDeudas = [];
 
         // ==================== HELPERS ====================
         function showLoading() { document.getElementById('loading').classList.add('show'); }
@@ -774,12 +913,15 @@
                 
                 if (currentRole === 'admin') {
                     document.getElementById('admin-tab').style.display = 'flex';
+                    document.getElementById('admin-month').value = selectedMonth;
                 }
 
                 // Set current month
                 const now = new Date();
                 selectedMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                historialMonth = selectedMonth;
                 document.getElementById('selected-month').value = selectedMonth;
+                document.getElementById('historial-month').value = historialMonth;
                 
                 await loadAllData();
                 showNotification(`¡Bienvenido, ${currentUser}!`);
@@ -803,6 +945,7 @@
             await Promise.all([loadIngresos(), loadGastos(), loadDeudas(), loadFamilySummary()]);
             updateStats();
             updateMonthlyView();
+            updateHistorialView();
             if (currentRole === 'admin') await loadAdminData();
             hideLoading();
         }
@@ -865,7 +1008,6 @@
             document.getElementById('month-name-ingresos').textContent = monthName;
             document.getElementById('month-name-gastos').textContent = monthName;
 
-            // Filter by month
             const monthIngresos = userIngresos.filter(i => getMonthFromDate(i.fecha) === selectedMonth);
             const monthGastos = userGastos.filter(g => getMonthFromDate(g.fecha) === selectedMonth);
 
@@ -873,7 +1015,6 @@
             const totalMonthGastos = monthGastos.reduce((s, g) => s + (g.monto || 0), 0);
             const monthBalance = totalMonthIngresos - totalMonthGastos;
 
-            // Update monthly stats
             document.getElementById('month-ingresos').textContent = formatCurrency(totalMonthIngresos);
             document.getElementById('month-gastos').textContent = formatCurrency(totalMonthGastos);
             document.getElementById('month-balance').textContent = formatCurrency(monthBalance);
@@ -882,7 +1023,6 @@
             document.getElementById('month-ingresos-total').textContent = formatCurrency(totalMonthIngresos);
             document.getElementById('month-gastos-total').textContent = formatCurrency(totalMonthGastos);
 
-            // Render lists
             const ingresosContainer = document.getElementById('month-ingresos-list');
             if (monthIngresos.length === 0) {
                 ingresosContainer.innerHTML = '<div class="empty-state">No hay ingresos en este mes</div>';
@@ -925,6 +1065,83 @@
                     `;
                 }).join('');
             }
+        }
+
+        // ==================== HISTORIAL VIEW - NUEVA ====================
+        function updateHistorialView() {
+            const monthGastos = userGastos.filter(g => getMonthFromDate(g.fecha) === historialMonth);
+            const container = document.getElementById('historial-categories');
+            const totalContainer = document.getElementById('historial-total-container');
+
+            if (monthGastos.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay gastos en este mes</div>';
+                totalContainer.style.display = 'none';
+                return;
+            }
+
+            // Agrupar por categoría
+            const grouped = {};
+            let totalMonth = 0;
+
+            monthGastos.forEach(g => {
+                const cat = g.categoria || 'otros';
+                if (!grouped[cat]) {
+                    grouped[cat] = { items: [], total: 0 };
+                }
+                grouped[cat].items.push(g);
+                grouped[cat].total += g.monto || 0;
+                totalMonth += g.monto || 0;
+            });
+
+            // Ordenar categorías por total (mayor a menor)
+            const sortedCategories = Object.keys(grouped).sort((a, b) => grouped[b].total - grouped[a].total);
+
+            let html = '';
+
+            sortedCategories.forEach(catKey => {
+                const cat = CATEGORIES[catKey] || CATEGORIES.otros;
+                const data = grouped[catKey];
+                const percentage = (data.total / totalMonth * 100).toFixed(1);
+
+                html += `
+                    <div class="category-section">
+                        <div class="category-header" onclick="toggleCategory('${catKey}')">
+                            <div class="category-header-left">
+                                <div class="category-icon" style="background: ${cat.color}22">${cat.icon}</div>
+                                <div>
+                                    <div class="category-name">${cat.name}</div>
+                                    <div class="category-count">${data.items.length} gasto${data.items.length !== 1 ? 's' : ''} • ${percentage}%</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-bar" style="width: ${percentage}%; background: ${cat.color}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="category-total">${formatCurrency(data.total)}</div>
+                        </div>
+                        <div class="category-items" id="cat-${catKey}">
+                            ${data.items.map(item => `
+                                <div class="category-item">
+                                    <div class="category-item-info">
+                                        <h5>${item.descripcion}</h5>
+                                        <p>${formatDate(item.fecha)}</p>
+                                    </div>
+                                    <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            
+            document.getElementById('historial-total').textContent = formatCurrency(totalMonth);
+            totalContainer.style.display = 'block';
+        }
+
+        function toggleCategory(catKey) {
+            const items = document.getElementById(`cat-${catKey}`);
+            items.classList.toggle('show');
         }
 
         // ==================== RENDERS ====================
@@ -1049,43 +1266,141 @@
         }
 
         function renderAdminData(data) {
-            const gastosContainer = document.getElementById('admin-gastos');
-            const ingresosContainer = document.getElementById('admin-ingresos');
+            allAdminGastos = data.gastos || [];
+            allAdminIngresos = data.ingresos || [];
+            allAdminDeudas = data.deudas || [];
+            updateAdminView();
+            renderAdminDeudas();
+        }
+
+        function updateAdminView() {
+            const adminMonth = document.getElementById('admin-month').value;
+            if (!adminMonth) {
+                document.getElementById('admin-categories').innerHTML = '<div class="empty-state">Selecciona un mes para ver los gastos</div>';
+                document.getElementById('admin-ingresos-mes').innerHTML = '<div class="empty-state">Selecciona un mes</div>';
+                return;
+            }
+
+            // Filtrar por mes
+            const monthGastos = allAdminGastos.filter(g => getMonthFromDate(g.fecha) === adminMonth);
+            const monthIngresos = allAdminIngresos.filter(i => getMonthFromDate(i.fecha) === adminMonth);
+
+            const totalGastos = monthGastos.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+            const totalIngresos = monthIngresos.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
+            const balance = totalIngresos - totalGastos;
+
+            document.getElementById('admin-total-ingresos').textContent = formatCurrency(totalIngresos);
+            document.getElementById('admin-total-gastos').textContent = formatCurrency(totalGastos);
+            document.getElementById('admin-balance').textContent = formatCurrency(balance);
+            document.getElementById('admin-balance').className = `monthly-stat-value ${balance >= 0 ? 'green' : 'red'}`;
+
+            // Agrupar gastos por categoría
+            const container = document.getElementById('admin-categories');
+            
+            if (monthGastos.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay gastos en este mes</div>';
+            } else {
+                const grouped = {};
+                monthGastos.forEach(g => {
+                    const cat = g.categoria || 'otros';
+                    if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+                    grouped[cat].items.push(g);
+                    grouped[cat].total += parseFloat(g.monto) || 0;
+                });
+
+                const sortedCategories = Object.keys(grouped).sort((a, b) => grouped[b].total - grouped[a].total);
+
+                let html = '';
+                sortedCategories.forEach(catKey => {
+                    const cat = CATEGORIES[catKey] || CATEGORIES.otros;
+                    const data = grouped[catKey];
+                    const percentage = totalGastos > 0 ? (data.total / totalGastos * 100).toFixed(1) : 0;
+
+                    html += `
+                        <div class="category-section">
+                            <div class="category-header" onclick="toggleAdminCategory('${catKey}')">
+                                <div class="category-header-left">
+                                    <div class="category-icon" style="background: ${cat.color}22">${cat.icon}</div>
+                                    <div>
+                                        <div class="category-name">${cat.name}</div>
+                                        <div class="category-count">${data.items.length} gasto${data.items.length !== 1 ? 's' : ''} • ${percentage}%</div>
+                                        <div class="category-progress">
+                                            <div class="category-progress-bar" style="width: ${percentage}%; background: ${cat.color}"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="category-total">${formatCurrency(data.total)}</div>
+                            </div>
+                            <div class="category-items" id="admin-cat-${catKey}">
+                                ${data.items.map(item => `
+                                    <div class="category-item">
+                                        <div class="category-item-info">
+                                            <h5>${item.descripcion}</h5>
+                                            <p>${formatDate(item.fecha)} • <span style="color: #A78BFA;">👤 ${item.usuario}</span></p>
+                                        </div>
+                                        <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            }
+
+            // Ingresos por usuario
+            const ingresosContainer = document.getElementById('admin-ingresos-mes');
+            if (monthIngresos.length === 0) {
+                ingresosContainer.innerHTML = '<div class="empty-state">No hay ingresos en este mes</div>';
+            } else {
+                // Agrupar por usuario
+                const byUser = {};
+                monthIngresos.forEach(i => {
+                    if (!byUser[i.usuario]) byUser[i.usuario] = { items: [], total: 0 };
+                    byUser[i.usuario].items.push(i);
+                    byUser[i.usuario].total += parseFloat(i.monto) || 0;
+                });
+
+                let html = '';
+                Object.keys(byUser).forEach(user => {
+                    const userData = byUser[user];
+                    html += `
+                        <div class="category-section" style="margin-bottom: 12px;">
+                            <div class="category-header" onclick="toggleAdminIngreso('${user}')">
+                                <div class="category-header-left">
+                                    <div class="category-icon" style="background: rgba(16,185,129,0.2)">👤</div>
+                                    <div>
+                                        <div class="category-name">${user}</div>
+                                        <div class="category-count">${userData.items.length} ingreso${userData.items.length !== 1 ? 's' : ''}</div>
+                                    </div>
+                                </div>
+                                <div class="category-total" style="color: #10B981;">${formatCurrency(userData.total)}</div>
+                            </div>
+                            <div class="category-items" id="admin-ing-${user}">
+                                ${userData.items.map(item => `
+                                    <div class="category-item">
+                                        <div class="category-item-info">
+                                            <h5>${item.descripcion}</h5>
+                                            <p>${formatDate(item.fecha)}</p>
+                                        </div>
+                                        <div class="category-item-amount" style="color: #10B981;">${formatCurrency(item.monto)}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                ingresosContainer.innerHTML = html;
+            }
+        }
+
+        function renderAdminDeudas() {
             const deudasContainer = document.getElementById('admin-deudas');
-
-            gastosContainer.innerHTML = data.gastos.length ? data.gastos.map(g => `
+            deudasContainer.innerHTML = allAdminDeudas.length ? allAdminDeudas.map(d => `
                 <div class="list-item">
                     <div class="list-item-left">
-                        <div class="list-info">
-                            <h4>${g.descripcion}</h4>
-                            <p>${formatDate(g.fecha)}</p>
-                            <span class="user-tag">👤 ${g.usuario}</span>
-                        </div>
-                    </div>
-                    <div class="list-item-right">
-                        <span class="amount red">-${formatCurrency(g.monto)}</span>
-                    </div>
-                </div>
-            `).join('') : '<div class="empty-state">No hay gastos</div>';
-
-            ingresosContainer.innerHTML = data.ingresos.length ? data.ingresos.map(i => `
-                <div class="list-item">
-                    <div class="list-item-left">
-                        <div class="list-info">
-                            <h4>${i.descripcion}</h4>
-                            <p>${formatDate(i.fecha)}</p>
-                            <span class="user-tag">👤 ${i.usuario}</span>
-                        </div>
-                    </div>
-                    <div class="list-item-right">
-                        <span class="amount green">+${formatCurrency(i.monto)}</span>
-                    </div>
-                </div>
-            `).join('') : '<div class="empty-state">No hay ingresos</div>';
-
-            deudasContainer.innerHTML = data.deudas.length ? data.deudas.map(d => `
-                <div class="list-item">
-                    <div class="list-item-left">
+                        <div class="list-icon" style="background: ${d.tipo === 'debo' ? 'rgba(249,115,22,0.2)' : 'rgba(59,130,246,0.2)'}">${d.tipo === 'debo' ? '😰' : '😊'}</div>
                         <div class="list-info">
                             <h4>${d.descripcion}</h4>
                             <p>${d.tipo === 'debo' ? 'Debe a' : 'Le debe'}: ${d.persona}</p>
@@ -1097,6 +1412,16 @@
                     </div>
                 </div>
             `).join('') : '<div class="empty-state">No hay deudas</div>';
+        }
+
+        function toggleAdminCategory(catKey) {
+            const items = document.getElementById(`admin-cat-${catKey}`);
+            if (items) items.classList.toggle('show');
+        }
+
+        function toggleAdminIngreso(user) {
+            const items = document.getElementById(`admin-ing-${user}`);
+            if (items) items.classList.toggle('show');
         }
 
         // ==================== ACTIONS ====================
@@ -1308,10 +1633,18 @@
             document.getElementById('login-btn').addEventListener('click', login);
             document.getElementById('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
             
-            // Month selector change event
             document.getElementById('selected-month').addEventListener('change', (e) => {
                 selectedMonth = e.target.value;
                 updateMonthlyView();
+            });
+
+            document.getElementById('historial-month').addEventListener('change', (e) => {
+                historialMonth = e.target.value;
+                updateHistorialView();
+            });
+
+            document.getElementById('admin-month').addEventListener('change', (e) => {
+                updateAdminView();
             });
         });
     </script>
