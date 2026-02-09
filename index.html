@@ -637,9 +637,9 @@
 
             <!-- TAB: GASTOS -->
             <div id="tab-gastos" class="tab-content">
-                <div class="card-grid">
-                    <div class="card">
-                        <div class="card-title">➕ Registrar Gasto</div>
+                <div class="card">
+                    <div class="card-title">➕ Registrar Gasto</div>
+                    <div class="card-grid">
                         <div class="form-group">
                             <label class="form-label">Descripción</label>
                             <input type="text" id="gasto-desc" class="form-input" placeholder="¿En qué gastaste?">
@@ -663,13 +663,18 @@
                                 <option value="otros">📦 Otros</option>
                             </select>
                         </div>
-                        <button class="btn btn-primary" onclick="addGasto()" style="width:100%">💸 Agregar Gasto</button>
                     </div>
-                    <div class="card">
-                        <div class="card-title">📉 Todos Mis Gastos</div>
-                        <div id="list-gastos" class="list">
-                            <div class="empty-state">No hay gastos registrados</div>
-                        </div>
+                    <button class="btn btn-primary" onclick="addGasto()" style="width:100%; margin-top: 16px;">💸 Agregar Gasto</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📉 Mis Gastos por Categoría</div>
+                    <div class="historial-total" style="margin-bottom: 20px; margin-top: 0;">
+                        <div class="historial-total-label">Total de Todos Mis Gastos</div>
+                        <div class="historial-total-value" id="gastos-total-all">S/ 0.00</div>
+                    </div>
+                    <div id="gastos-by-category">
+                        <div class="empty-state">No hay gastos registrados</div>
                     </div>
                 </div>
             </div>
@@ -745,35 +750,38 @@
             <div id="tab-admin" class="tab-content">
                 <div class="card">
                     <div class="card-title">⚙️ Panel de Administrador - Gastos Familiares</div>
-                    <p style="color: #64748B; margin-bottom: 20px;">Vista completa de todos los gastos de la familia por mes y categoría.</p>
+                    <p style="color: #64748B; margin-bottom: 20px;">Vista completa de todos los gastos de la familia.</p>
                     
-                    <div class="month-selector">
-                        <label>Seleccionar mes:</label>
-                        <input type="month" id="admin-month">
+                    <div class="month-selector" style="margin-bottom: 16px;">
+                        <label>Filtrar por mes:</label>
+                        <select id="admin-month-filter" class="form-select" style="width: auto; min-width: 200px;">
+                            <option value="all">📊 Todos los meses</option>
+                        </select>
                     </div>
 
                     <div class="monthly-stats" style="margin-bottom: 24px;">
                         <div class="monthly-stat">
-                            <div class="monthly-stat-label">Total Ingresos Familia</div>
+                            <div class="monthly-stat-label">Total Ingresos</div>
                             <div class="monthly-stat-value green" id="admin-total-ingresos">S/ 0.00</div>
                         </div>
                         <div class="monthly-stat">
-                            <div class="monthly-stat-label">Total Gastos Familia</div>
+                            <div class="monthly-stat-label">Total Gastos</div>
                             <div class="monthly-stat-value red" id="admin-total-gastos">S/ 0.00</div>
                         </div>
                         <div class="monthly-stat">
-                            <div class="monthly-stat-label">Balance Familiar</div>
+                            <div class="monthly-stat-label">Balance</div>
                             <div class="monthly-stat-value purple" id="admin-balance">S/ 0.00</div>
                         </div>
                     </div>
 
+                    <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">💸 Gastos por Categoría</h3>
                     <div id="admin-categories">
-                        <div class="empty-state">Selecciona un mes para ver los gastos</div>
+                        <div class="empty-state">Cargando gastos...</div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">💵 Ingresos del Mes por Usuario</div>
+                    <div class="card-title">💵 Ingresos por Usuario</div>
                     <div id="admin-ingresos-mes" class="list"></div>
                 </div>
 
@@ -913,7 +921,6 @@
                 
                 if (currentRole === 'admin') {
                     document.getElementById('admin-tab').style.display = 'flex';
-                    document.getElementById('admin-month').value = selectedMonth;
                 }
 
                 // Set current month
@@ -1169,29 +1176,76 @@
         }
 
         function renderGastos() {
-            const container = document.getElementById('list-gastos');
+            const container = document.getElementById('gastos-by-category');
+            const totalElement = document.getElementById('gastos-total-all');
+            
             if (userGastos.length === 0) {
                 container.innerHTML = '<div class="empty-state">No hay gastos registrados</div>';
+                totalElement.textContent = formatCurrency(0);
                 return;
             }
-            container.innerHTML = userGastos.map(g => {
-                const cat = CATEGORIES[g.categoria] || CATEGORIES.otros;
-                return `
-                    <div class="list-item">
-                        <div class="list-item-left">
-                            <div class="list-icon" style="background: ${cat.color}22">${cat.icon}</div>
-                            <div class="list-info">
-                                <h4>${g.descripcion}</h4>
-                                <p>${formatDate(g.fecha)}</p>
+
+            // Calcular total
+            const totalAll = userGastos.reduce((s, g) => s + (g.monto || 0), 0);
+            totalElement.textContent = formatCurrency(totalAll);
+
+            // Agrupar por categoría
+            const grouped = {};
+            userGastos.forEach(g => {
+                const cat = g.categoria || 'otros';
+                if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+                grouped[cat].items.push(g);
+                grouped[cat].total += g.monto || 0;
+            });
+
+            // Ordenar por total (mayor a menor)
+            const sortedCategories = Object.keys(grouped).sort((a, b) => grouped[b].total - grouped[a].total);
+
+            let html = '';
+            sortedCategories.forEach(catKey => {
+                const cat = CATEGORIES[catKey] || CATEGORIES.otros;
+                const data = grouped[catKey];
+                const percentage = totalAll > 0 ? (data.total / totalAll * 100).toFixed(1) : 0;
+
+                html += `
+                    <div class="category-section">
+                        <div class="category-header" onclick="toggleGastoCategory('${catKey}')">
+                            <div class="category-header-left">
+                                <div class="category-icon" style="background: ${cat.color}22">${cat.icon}</div>
+                                <div>
+                                    <div class="category-name">${cat.name}</div>
+                                    <div class="category-count">${data.items.length} gasto${data.items.length !== 1 ? 's' : ''} • ${percentage}%</div>
+                                    <div class="category-progress">
+                                        <div class="category-progress-bar" style="width: ${percentage}%; background: ${cat.color}"></div>
+                                    </div>
+                                </div>
                             </div>
+                            <div class="category-total">${formatCurrency(data.total)}</div>
                         </div>
-                        <div class="list-item-right">
-                            <span class="amount red">-${formatCurrency(g.monto)}</span>
-                            <button class="delete-btn" onclick="deleteGasto('${g.id}')">🗑️</button>
+                        <div class="category-items" id="gasto-cat-${catKey}">
+                            ${data.items.map(item => `
+                                <div class="category-item">
+                                    <div class="category-item-info">
+                                        <h5>${item.descripcion}</h5>
+                                        <p>${formatDate(item.fecha)}</p>
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                        <button class="delete-btn" onclick="deleteGasto('${item.id}')">🗑️</button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
-            }).join('');
+            });
+
+            container.innerHTML = html;
+        }
+
+        function toggleGastoCategory(catKey) {
+            const items = document.getElementById(`gasto-cat-${catKey}`);
+            if (items) items.classList.toggle('show');
         }
 
         function renderDeudas() {
@@ -1269,24 +1323,47 @@
             allAdminGastos = data.gastos || [];
             allAdminIngresos = data.ingresos || [];
             allAdminDeudas = data.deudas || [];
+            
+            // Llenar el select de meses
+            populateAdminMonthFilter();
+            
             updateAdminView();
             renderAdminDeudas();
         }
 
+        function populateAdminMonthFilter() {
+            const select = document.getElementById('admin-month-filter');
+            const months = new Set();
+            
+            allAdminGastos.forEach(g => {
+                const m = getMonthFromDate(g.fecha);
+                if (m) months.add(m);
+            });
+            allAdminIngresos.forEach(i => {
+                const m = getMonthFromDate(i.fecha);
+                if (m) months.add(m);
+            });
+
+            const sortedMonths = Array.from(months).sort().reverse();
+            
+            select.innerHTML = '<option value="all">📊 Todos los meses</option>' +
+                sortedMonths.map(m => `<option value="${m}">${getMonthName(m)}</option>`).join('');
+        }
+
         function updateAdminView() {
-            const adminMonth = document.getElementById('admin-month').value;
-            if (!adminMonth) {
-                document.getElementById('admin-categories').innerHTML = '<div class="empty-state">Selecciona un mes para ver los gastos</div>';
-                document.getElementById('admin-ingresos-mes').innerHTML = '<div class="empty-state">Selecciona un mes</div>';
-                return;
+            const filterValue = document.getElementById('admin-month-filter').value;
+            
+            // Filtrar por mes si no es "all"
+            let filteredGastos = allAdminGastos;
+            let filteredIngresos = allAdminIngresos;
+            
+            if (filterValue !== 'all') {
+                filteredGastos = allAdminGastos.filter(g => getMonthFromDate(g.fecha) === filterValue);
+                filteredIngresos = allAdminIngresos.filter(i => getMonthFromDate(i.fecha) === filterValue);
             }
 
-            // Filtrar por mes
-            const monthGastos = allAdminGastos.filter(g => getMonthFromDate(g.fecha) === adminMonth);
-            const monthIngresos = allAdminIngresos.filter(i => getMonthFromDate(i.fecha) === adminMonth);
-
-            const totalGastos = monthGastos.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
-            const totalIngresos = monthIngresos.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
+            const totalGastos = filteredGastos.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+            const totalIngresos = filteredIngresos.reduce((s, i) => s + (parseFloat(i.monto) || 0), 0);
             const balance = totalIngresos - totalGastos;
 
             document.getElementById('admin-total-ingresos').textContent = formatCurrency(totalIngresos);
@@ -1297,11 +1374,11 @@
             // Agrupar gastos por categoría
             const container = document.getElementById('admin-categories');
             
-            if (monthGastos.length === 0) {
-                container.innerHTML = '<div class="empty-state">No hay gastos en este mes</div>';
+            if (filteredGastos.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay gastos registrados</div>';
             } else {
                 const grouped = {};
-                monthGastos.forEach(g => {
+                filteredGastos.forEach(g => {
                     const cat = g.categoria || 'otros';
                     if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
                     grouped[cat].items.push(g);
@@ -1336,7 +1413,7 @@
                                     <div class="category-item">
                                         <div class="category-item-info">
                                             <h5>${item.descripcion}</h5>
-                                            <p>${formatDate(item.fecha)} • <span style="color: #A78BFA;">👤 ${item.usuario}</span></p>
+                                            <p>${formatDate(item.fecha)} • <span style="color: #A78BFA; font-weight: 500;">👤 ${item.usuario}</span></p>
                                         </div>
                                         <div class="category-item-amount">${formatCurrency(item.monto)}</div>
                                     </div>
@@ -1351,12 +1428,12 @@
 
             // Ingresos por usuario
             const ingresosContainer = document.getElementById('admin-ingresos-mes');
-            if (monthIngresos.length === 0) {
-                ingresosContainer.innerHTML = '<div class="empty-state">No hay ingresos en este mes</div>';
+            if (filteredIngresos.length === 0) {
+                ingresosContainer.innerHTML = '<div class="empty-state">No hay ingresos registrados</div>';
             } else {
                 // Agrupar por usuario
                 const byUser = {};
-                monthIngresos.forEach(i => {
+                filteredIngresos.forEach(i => {
                     if (!byUser[i.usuario]) byUser[i.usuario] = { items: [], total: 0 };
                     byUser[i.usuario].items.push(i);
                     byUser[i.usuario].total += parseFloat(i.monto) || 0;
@@ -1643,7 +1720,7 @@
                 updateHistorialView();
             });
 
-            document.getElementById('admin-month').addEventListener('change', (e) => {
+            document.getElementById('admin-month-filter').addEventListener('change', (e) => {
                 updateAdminView();
             });
         });
