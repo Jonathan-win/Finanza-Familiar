@@ -649,6 +649,10 @@
                             <input type="number" id="gasto-monto" class="form-input" placeholder="S/ 0.00">
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" id="gasto-fecha" class="form-input">
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Categoría</label>
                             <select id="gasto-categoria" class="form-select">
                                 <option value="alimentacion">🍽️ Alimentación</option>
@@ -816,6 +820,49 @@
         </div>
     </div>
 
+    <!-- Modal: Editar Gasto (Admin) -->
+    <div id="edit-gasto-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-title">✏️ Editar Gasto</div>
+            <input type="hidden" id="edit-gasto-id">
+            <div class="form-group">
+                <label class="form-label">Usuario</label>
+                <input type="text" id="edit-gasto-usuario" class="form-input" readonly style="opacity: 0.7;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <input type="text" id="edit-gasto-desc" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Monto</label>
+                <input type="number" id="edit-gasto-monto" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input type="date" id="edit-gasto-fecha" class="form-input">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Categoría</label>
+                <select id="edit-gasto-categoria" class="form-select">
+                    <option value="alimentacion">🍽️ Alimentación</option>
+                    <option value="transporte">🚗 Transporte</option>
+                    <option value="servicios">💡 Servicios</option>
+                    <option value="vivienda">🏠 Vivienda</option>
+                    <option value="salud">💊 Salud</option>
+                    <option value="educacion">📚 Educación</option>
+                    <option value="entretenimiento">🎬 Entretenimiento</option>
+                    <option value="ropa">👕 Ropa</option>
+                    <option value="tecnologia">💻 Tecnología</option>
+                    <option value="otros">📦 Otros</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeEditGastoModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveEditGasto()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsBo-GGgDNbfYzvGBpNHUmSQW8dEXyqProVkpr_8BAgkbKcE4Kl4acys25mMeUONGspQ/exec';
 
@@ -879,6 +926,17 @@
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             return `${year}-${month}`;
+        }
+
+        function getTodayDate() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        function getDateForInput(dateStr) {
+            if (!dateStr) return getTodayDate();
+            const d = new Date(dateStr);
+            return d.toISOString().split('T')[0];
         }
 
         async function apiCall(params) {
@@ -1415,7 +1473,10 @@
                                             <h5>${item.descripcion}</h5>
                                             <p>${formatDate(item.fecha)} • <span style="color: #A78BFA; font-weight: 500;">👤 ${item.usuario}</span></p>
                                         </div>
-                                        <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                            <button class="delete-btn" onclick="openEditGastoModal('${item.id}', '${item.usuario}', \`${item.descripcion.replace(/`/g, "'")}\`, ${parseFloat(item.monto) || 0}, '${item.fecha}', '${item.categoria || 'otros'}')" title="Editar">✏️</button>
+                                        </div>
                                     </div>
                                 `).join('')}
                             </div>
@@ -1501,6 +1562,52 @@
             if (items) items.classList.toggle('show');
         }
 
+        // ==================== EDIT GASTO (ADMIN) ====================
+        function openEditGastoModal(id, usuario, descripcion, monto, fecha, categoria) {
+            document.getElementById('edit-gasto-id').value = id;
+            document.getElementById('edit-gasto-usuario').value = usuario;
+            document.getElementById('edit-gasto-desc').value = descripcion;
+            document.getElementById('edit-gasto-monto').value = monto;
+            document.getElementById('edit-gasto-fecha').value = getDateForInput(fecha);
+            document.getElementById('edit-gasto-categoria').value = categoria || 'otros';
+            document.getElementById('edit-gasto-modal').classList.add('show');
+        }
+
+        function closeEditGastoModal() {
+            document.getElementById('edit-gasto-modal').classList.remove('show');
+        }
+
+        async function saveEditGasto() {
+            const id = document.getElementById('edit-gasto-id').value;
+            const descripcion = document.getElementById('edit-gasto-desc').value;
+            const monto = parseFloat(document.getElementById('edit-gasto-monto').value);
+            const fechaInput = document.getElementById('edit-gasto-fecha').value;
+            const categoria = document.getElementById('edit-gasto-categoria').value;
+
+            if (!descripcion || !monto) return showNotification('Completa todos los campos', 'error');
+
+            const fecha = fechaInput ? new Date(fechaInput + 'T12:00:00').toISOString() : new Date().toISOString();
+
+            showLoading();
+            const res = await apiCall({ 
+                action: 'updateGasto', 
+                id, 
+                descripcion, 
+                monto, 
+                fecha, 
+                categoria 
+            });
+            hideLoading();
+
+            if (res.success) {
+                closeEditGastoModal();
+                await loadAllData();
+                showNotification('Gasto actualizado');
+            } else {
+                showNotification(res.error || 'Error al actualizar', 'error');
+            }
+        }
+
         // ==================== ACTIONS ====================
         async function addIngreso() {
             const desc = document.getElementById('ingreso-desc').value;
@@ -1525,15 +1632,21 @@
             const desc = document.getElementById('gasto-desc').value;
             const monto = parseFloat(document.getElementById('gasto-monto').value);
             const cat = document.getElementById('gasto-categoria').value;
+            const fechaInput = document.getElementById('gasto-fecha').value;
+            
             if (!desc || !monto) return showNotification('Completa todos los campos', 'error');
 
+            // Si no hay fecha seleccionada, usar hoy
+            const fecha = fechaInput ? new Date(fechaInput + 'T12:00:00').toISOString() : new Date().toISOString();
+
             showLoading();
-            const res = await apiCall({ action: 'write', descripcion: desc, monto, categoria: cat, tipo: 'variable', usuario: currentUser, fecha: new Date().toISOString() });
+            const res = await apiCall({ action: 'write', descripcion: desc, monto, categoria: cat, tipo: 'variable', usuario: currentUser, fecha });
             hideLoading();
 
             if (res.success) {
                 document.getElementById('gasto-desc').value = '';
                 document.getElementById('gasto-monto').value = '';
+                document.getElementById('gasto-fecha').value = getTodayDate();
                 await loadAllData();
                 showNotification('Gasto registrado');
             } else {
@@ -1709,6 +1822,9 @@
             await loadUsers();
             document.getElementById('login-btn').addEventListener('click', login);
             document.getElementById('login-password').addEventListener('keypress', e => { if (e.key === 'Enter') login(); });
+            
+            // Inicializar fecha de hoy en el formulario de gastos
+            document.getElementById('gasto-fecha').value = getTodayDate();
             
             document.getElementById('selected-month').addEventListener('change', (e) => {
                 selectedMonth = e.target.value;
