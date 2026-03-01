@@ -443,6 +443,112 @@
         .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
         .modal-actions .btn { flex: 1; }
 
+        /* Fiado Option */
+        .fiado-option {
+            margin-top: 16px;
+            padding: 16px;
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 12px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        .checkbox-container input[type="checkbox"] {
+            display: none;
+        }
+        .checkmark {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .checkbox-container input:checked + .checkmark {
+            background: #F59E0B;
+            border-color: #F59E0B;
+        }
+        .checkbox-container input:checked + .checkmark::after {
+            content: '✓';
+            color: #000;
+            font-weight: bold;
+        }
+        .checkbox-label {
+            font-weight: 500;
+        }
+        .fiado-hint {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #94A3B8;
+            margin-left: 36px;
+        }
+        .fiado-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(249, 115, 22, 0.2);
+            color: #F59E0B;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Day Filter */
+        .day-filter {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .day-filter-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .day-filter-header label {
+            font-size: 14px;
+            color: #94A3B8;
+        }
+        .day-filter-header input[type="date"] {
+            padding: 10px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(30, 41, 59, 0.95);
+            color: #E2E8F0;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .day-results {
+            margin-top: 16px;
+        }
+        .day-total {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+        .day-total-label {
+            font-size: 14px;
+            color: #94A3B8;
+        }
+        .day-total-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #EF4444;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .header-content { justify-content: center; text-align: center; }
@@ -528,6 +634,10 @@
                     <div class="stat-card red">
                         <div class="stat-label">Total Gastos</div>
                         <div class="stat-value red" id="stat-gastos">S/ 0.00</div>
+                    </div>
+                    <div class="stat-card" style="border-color: #F59E0B;">
+                        <div class="stat-label">🏪 Fiados Pendientes</div>
+                        <div class="stat-value" style="color: #F59E0B;" id="stat-fiados">S/ 0.00</div>
                     </div>
                     <div class="stat-card orange">
                         <div class="stat-label">Debo</div>
@@ -664,9 +774,22 @@
                                 <option value="entretenimiento">🎬 Entretenimiento</option>
                                 <option value="ropa">👕 Ropa</option>
                                 <option value="tecnologia">💻 Tecnología</option>
+                                <option value="higiene">🧴 Higiene Personal</option>
+                                <option value="tratamiento">💉 Tratamiento</option>
+                                <option value="golosinas">🍬 Golosinas</option>
+                                <option value="gustos">🎁 Gustos-Antojos</option>
+                                <option value="amira2026">👧 AMIRA-2026</option>
                                 <option value="otros">📦 Otros</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="fiado-option">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="gasto-fiado">
+                            <span class="checkmark"></span>
+                            <span class="checkbox-label">🏪 Es fiado (no descontar del balance)</span>
+                        </label>
+                        <p class="fiado-hint">Marca esta opción si es un gasto que pagarás después (ej: desayuno fiado)</p>
                     </div>
                     <button class="btn btn-primary" onclick="addGasto()" style="width:100%; margin-top: 16px;">💸 Agregar Gasto</button>
                 </div>
@@ -674,9 +797,26 @@
                 <div class="card">
                     <div class="card-title">📉 Mis Gastos por Categoría</div>
                     <div class="historial-total" style="margin-bottom: 20px; margin-top: 0;">
-                        <div class="historial-total-label">Total de Todos Mis Gastos</div>
+                        <div class="historial-total-label">Total de Todos Mis Gastos (sin fiados)</div>
                         <div class="historial-total-value" id="gastos-total-all">S/ 0.00</div>
                     </div>
+                    
+                    <!-- Filtro por día -->
+                    <div class="day-filter">
+                        <div class="day-filter-header">
+                            <label>📅 Ver gastos de un día específico:</label>
+                            <input type="date" id="filter-day" onchange="filterByDay()">
+                            <button class="btn btn-secondary btn-sm" onclick="clearDayFilter()">Ver todos</button>
+                        </div>
+                        <div id="day-results" class="day-results" style="display: none;">
+                            <div id="day-gastos-list"></div>
+                            <div class="day-total">
+                                <span class="day-total-label">Total del día:</span>
+                                <span class="day-total-value" id="day-total">S/ 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div id="gastos-by-category">
                         <div class="empty-state">No hay gastos registrados</div>
                     </div>
@@ -853,6 +993,11 @@
                     <option value="entretenimiento">🎬 Entretenimiento</option>
                     <option value="ropa">👕 Ropa</option>
                     <option value="tecnologia">💻 Tecnología</option>
+                    <option value="higiene">🧴 Higiene Personal</option>
+                    <option value="tratamiento">💉 Tratamiento</option>
+                    <option value="golosinas">🍬 Golosinas</option>
+                    <option value="gustos">🎁 Gustos-Antojos</option>
+                    <option value="amira2026">👧 AMIRA-2026</option>
                     <option value="otros">📦 Otros</option>
                 </select>
             </div>
@@ -876,6 +1021,11 @@
             entretenimiento: { icon: '🎬', name: 'Entretenimiento', color: '#9B59B6' },
             ropa: { icon: '👕', name: 'Ropa', color: '#E91E63' },
             tecnologia: { icon: '💻', name: 'Tecnología', color: '#00BCD4' },
+            higiene: { icon: '🧴', name: 'Higiene Personal', color: '#26A69A' },
+            tratamiento: { icon: '💉', name: 'Tratamiento', color: '#EF5350' },
+            golosinas: { icon: '🍬', name: 'Golosinas', color: '#AB47BC' },
+            gustos: { icon: '🎁', name: 'Gustos-Antojos', color: '#FF7043' },
+            amira2026: { icon: '👧', name: 'AMIRA-2026', color: '#EC407A' },
             otros: { icon: '📦', name: 'Otros', color: '#95A5A6' }
         };
 
@@ -1025,7 +1175,8 @@
             const res = await apiCall({ action: 'readUser', usuario: currentUser });
             userGastos = res.success ? res.data.map(r => ({
                 id: r.id, fecha: r.fecha, descripcion: r.descripcion,
-                monto: parseFloat(r.monto) || 0, categoria: r.categoria
+                monto: parseFloat(r.monto) || 0, categoria: r.categoria,
+                fiado: r.fiado || 'no'
             })) : [];
             renderGastos();
         }
@@ -1054,13 +1205,16 @@
         // ==================== STATS ====================
         function updateStats() {
             const totalIngresos = userIngresos.reduce((s, i) => s + (i.monto || 0), 0);
-            const totalGastos = userGastos.reduce((s, g) => s + (g.monto || 0), 0);
+            // Excluir fiados del total de gastos
+            const totalGastos = userGastos.filter(g => g.fiado !== 'si').reduce((s, g) => s + (g.monto || 0), 0);
+            const totalFiados = userGastos.filter(g => g.fiado === 'si').reduce((s, g) => s + (g.monto || 0), 0);
             const totalDebo = userDeudas.filter(d => d.tipo === 'debo').reduce((s, d) => s + (d.monto || 0), 0);
             const totalMeDeben = userDeudas.filter(d => d.tipo === 'me_deben').reduce((s, d) => s + (d.monto || 0), 0);
             const balance = totalIngresos - totalGastos - totalDebo + totalMeDeben;
 
             document.getElementById('stat-ingresos').textContent = formatCurrency(totalIngresos);
             document.getElementById('stat-gastos').textContent = formatCurrency(totalGastos);
+            document.getElementById('stat-fiados').textContent = formatCurrency(totalFiados);
             document.getElementById('stat-debo').textContent = formatCurrency(totalDebo);
             document.getElementById('stat-medeben').textContent = formatCurrency(totalMeDeben);
             document.getElementById('stat-balance').textContent = formatCurrency(balance);
@@ -1243,17 +1397,20 @@
                 return;
             }
 
-            // Calcular total
-            const totalAll = userGastos.reduce((s, g) => s + (g.monto || 0), 0);
+            // Calcular total (sin fiados)
+            const totalAll = userGastos.filter(g => g.fiado !== 'si').reduce((s, g) => s + (g.monto || 0), 0);
             totalElement.textContent = formatCurrency(totalAll);
 
             // Agrupar por categoría
             const grouped = {};
             userGastos.forEach(g => {
                 const cat = g.categoria || 'otros';
-                if (!grouped[cat]) grouped[cat] = { items: [], total: 0 };
+                if (!grouped[cat]) grouped[cat] = { items: [], total: 0, totalSinFiado: 0 };
                 grouped[cat].items.push(g);
                 grouped[cat].total += g.monto || 0;
+                if (g.fiado !== 'si') {
+                    grouped[cat].totalSinFiado += g.monto || 0;
+                }
             });
 
             // Ordenar por total (mayor a menor)
@@ -1263,7 +1420,7 @@
             sortedCategories.forEach(catKey => {
                 const cat = CATEGORIES[catKey] || CATEGORIES.otros;
                 const data = grouped[catKey];
-                const percentage = totalAll > 0 ? (data.total / totalAll * 100).toFixed(1) : 0;
+                const percentage = totalAll > 0 ? (data.totalSinFiado / totalAll * 100).toFixed(1) : 0;
 
                 html += `
                     <div class="category-section">
@@ -1284,11 +1441,11 @@
                             ${data.items.map(item => `
                                 <div class="category-item">
                                     <div class="category-item-info">
-                                        <h5>${item.descripcion}</h5>
+                                        <h5>${item.descripcion}${item.fiado === 'si' ? '<span class="fiado-badge">FIADO</span>' : ''}</h5>
                                         <p>${formatDate(item.fecha)}</p>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div class="category-item-amount">${formatCurrency(item.monto)}</div>
+                                        <div class="category-item-amount" style="${item.fiado === 'si' ? 'color: #F59E0B;' : ''}">${formatCurrency(item.monto)}</div>
                                         <button class="delete-btn" onclick="deleteGasto('${item.id}')">🗑️</button>
                                     </div>
                                 </div>
@@ -1299,6 +1456,58 @@
             });
 
             container.innerHTML = html;
+        }
+
+        function filterByDay() {
+            const selectedDay = document.getElementById('filter-day').value;
+            const resultsContainer = document.getElementById('day-results');
+            const listContainer = document.getElementById('day-gastos-list');
+            const totalElement = document.getElementById('day-total');
+
+            if (!selectedDay) {
+                resultsContainer.style.display = 'none';
+                return;
+            }
+
+            const dayGastos = userGastos.filter(g => {
+                const gastoDate = getDateForInput(g.fecha);
+                return gastoDate === selectedDay;
+            });
+
+            if (dayGastos.length === 0) {
+                resultsContainer.style.display = 'block';
+                listContainer.innerHTML = '<div class="empty-state" style="padding: 20px;">No hay gastos en esta fecha</div>';
+                totalElement.textContent = formatCurrency(0);
+                return;
+            }
+
+            const totalDay = dayGastos.reduce((s, g) => s + (g.monto || 0), 0);
+
+            listContainer.innerHTML = dayGastos.map(g => {
+                const cat = CATEGORIES[g.categoria] || CATEGORIES.otros;
+                return `
+                    <div class="list-item" style="margin-bottom: 8px;">
+                        <div class="list-item-left">
+                            <div class="list-icon" style="background: ${cat.color}22">${cat.icon}</div>
+                            <div class="list-info">
+                                <h4>${g.descripcion}${g.fiado === 'si' ? '<span class="fiado-badge">FIADO</span>' : ''}</h4>
+                                <p>${cat.name}</p>
+                            </div>
+                        </div>
+                        <div class="list-item-right">
+                            <span class="amount red" style="${g.fiado === 'si' ? 'color: #F59E0B;' : ''}">${formatCurrency(g.monto)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalElement.textContent = formatCurrency(totalDay);
+            resultsContainer.style.display = 'block';
+        }
+
+        function clearDayFilter() {
+            document.getElementById('filter-day').value = '';
+            document.getElementById('day-results').style.display = 'none';
         }
 
         function toggleGastoCategory(catKey) {
@@ -1633,6 +1842,7 @@
             const monto = parseFloat(document.getElementById('gasto-monto').value);
             const cat = document.getElementById('gasto-categoria').value;
             const fechaInput = document.getElementById('gasto-fecha').value;
+            const fiado = document.getElementById('gasto-fiado').checked ? 'si' : 'no';
             
             if (!desc || !monto) return showNotification('Completa todos los campos', 'error');
 
@@ -1640,15 +1850,16 @@
             const fecha = fechaInput ? new Date(fechaInput + 'T12:00:00').toISOString() : new Date().toISOString();
 
             showLoading();
-            const res = await apiCall({ action: 'write', descripcion: desc, monto, categoria: cat, tipo: 'variable', usuario: currentUser, fecha });
+            const res = await apiCall({ action: 'write', descripcion: desc, monto, categoria: cat, tipo: 'variable', usuario: currentUser, fecha, fiado });
             hideLoading();
 
             if (res.success) {
                 document.getElementById('gasto-desc').value = '';
                 document.getElementById('gasto-monto').value = '';
                 document.getElementById('gasto-fecha').value = getTodayDate();
+                document.getElementById('gasto-fiado').checked = false;
                 await loadAllData();
-                showNotification('Gasto registrado');
+                showNotification(fiado === 'si' ? 'Gasto fiado registrado' : 'Gasto registrado');
             } else {
                 showNotification(res.error || 'Error', 'error');
             }
