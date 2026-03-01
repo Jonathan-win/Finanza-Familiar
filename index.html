@@ -695,6 +695,16 @@
                     <div id="month-gastos-list" class="list">
                         <div class="empty-state">No hay gastos en este mes</div>
                     </div>
+
+                    <!-- Fiados del mes -->
+                    <div class="section-header" style="border-color: rgba(245, 158, 11, 0.3);">
+                        <span>🏪</span>
+                        <h3>Fiados de <span id="month-name-fiados">este mes</span></h3>
+                        <span class="total" style="color: #F59E0B;" id="month-fiados-total">S/ 0.00</span>
+                    </div>
+                    <div id="month-fiados-list" class="list">
+                        <div class="empty-state">No hay fiados en este mes</div>
+                    </div>
                 </div>
             </div>
 
@@ -1226,12 +1236,15 @@
             const monthName = getMonthName(selectedMonth);
             document.getElementById('month-name-ingresos').textContent = monthName;
             document.getElementById('month-name-gastos').textContent = monthName;
+            document.getElementById('month-name-fiados').textContent = monthName;
 
             const monthIngresos = userIngresos.filter(i => getMonthFromDate(i.fecha) === selectedMonth);
-            const monthGastos = userGastos.filter(g => getMonthFromDate(g.fecha) === selectedMonth);
+            const monthGastos = userGastos.filter(g => getMonthFromDate(g.fecha) === selectedMonth && g.fiado !== 'si');
+            const monthFiados = userGastos.filter(g => getMonthFromDate(g.fecha) === selectedMonth && g.fiado === 'si');
 
             const totalMonthIngresos = monthIngresos.reduce((s, i) => s + (i.monto || 0), 0);
             const totalMonthGastos = monthGastos.reduce((s, g) => s + (g.monto || 0), 0);
+            const totalMonthFiados = monthFiados.reduce((s, g) => s + (g.monto || 0), 0);
             const monthBalance = totalMonthIngresos - totalMonthGastos;
 
             document.getElementById('month-ingresos').textContent = formatCurrency(totalMonthIngresos);
@@ -1241,6 +1254,7 @@
 
             document.getElementById('month-ingresos-total').textContent = formatCurrency(totalMonthIngresos);
             document.getElementById('month-gastos-total').textContent = formatCurrency(totalMonthGastos);
+            document.getElementById('month-fiados-total').textContent = formatCurrency(totalMonthFiados);
 
             const ingresosContainer = document.getElementById('month-ingresos-list');
             if (monthIngresos.length === 0) {
@@ -1279,6 +1293,30 @@
                             </div>
                             <div class="list-item-right">
                                 <span class="amount red">-${formatCurrency(g.monto)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Fiados del mes
+            const fiadosContainer = document.getElementById('month-fiados-list');
+            if (monthFiados.length === 0) {
+                fiadosContainer.innerHTML = '<div class="empty-state">No hay fiados en este mes 🎉</div>';
+            } else {
+                fiadosContainer.innerHTML = monthFiados.map(g => {
+                    const cat = CATEGORIES[g.categoria] || CATEGORIES.otros;
+                    return `
+                        <div class="list-item" style="border-left: 3px solid #F59E0B;">
+                            <div class="list-item-left">
+                                <div class="list-icon" style="background: rgba(245, 158, 11, 0.2)">${cat.icon}</div>
+                                <div class="list-info">
+                                    <h4>${g.descripcion} <span class="fiado-badge">FIADO</span></h4>
+                                    <p>${formatDate(g.fecha)} • ${cat.name}</p>
+                                </div>
+                            </div>
+                            <div class="list-item-right">
+                                <span class="amount" style="color: #F59E0B;">${formatCurrency(g.monto)}</span>
                             </div>
                         </div>
                     `;
